@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bill Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .bill-item {
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .bill-item:last-child {
+      border-bottom: none;
+    }
+
+    .bill-total {
+      font-weight: bold;
+      font-size: 18px;
+      text-align: right;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Bill Calculator</h1>
+    <div id="bill-container"></div>
+    <div class="bill-total">Total: $<span id="total-amount"></span></div>
+  </div>
+
+  <script>
+    // Sample menu data
+    const menu = [
+      { id: 1, itemName: 'Item 1', rate: 10.99, taxes: [{ isInPercent: true, rate: 8 }] },
+      { id: 2, itemName: 'Item 2', rate: 15.50, taxes: [{ isInPercent: false, rate: 1.5 }] },
+      { id: 3, itemName: 'Item 3', rate: 8.75, taxes: [{ isInPercent: true, rate: 7 }] }
+    ];
+
+    function calculateBill(bill) {
+      let totalBillAmount = 0;
+      let billItems = [];
+
+      // Iterate through each item in the bill
+      bill.billItems.forEach(billItem => {
+        // Find the corresponding menu item for this bill item by matching the id
+        const menuItem = menu.find(item => item.id === billItem.id);
+        if (menuItem) {
+          let basePrice = Math.round(menuItem.rate); // Round base price to the nearest whole number
+          const quantity = billItem.quantity;
+          const discount = billItem.discount;
+          // Record the base price (before applying any discount) as a whole number
+          const basePriceBeforeDiscount = basePrice;
+          // Apply discount
+          let discountedPrice;
+          if (discount.isInPercent) {
+            // Percentage-based discount
+            discountedPrice = basePrice - (basePrice * (discount.rate / 100));
+          } else {
+            // Fixed-rate discount
+            discountedPrice = basePrice - discount.rate;
+          }
+          // Apply taxes on the discounted price
+          let finalPricePerItem = discountedPrice;
+          menuItem.taxes.forEach(tax => {
+            if (tax.isInPercent) {
+              // Percentage-based tax
+              finalPricePerItem += discountedPrice * (tax.rate / 100);
+            } else {
+              // Fixed-rate tax
+              finalPricePerItem += tax.rate;
+            }
+          });
+          // Round the final price per item to 2 decimal places after applying discounts and taxes
+          finalPricePerItem = parseFloat(finalPricePerItem.toFixed(2));
+          // Calculate the total for this item by multiplying by the quantity
+          const itemTotal = parseFloat((finalPricePerItem * quantity).toFixed(2));
+          // Add the item total to the overall bill amount
+          totalBillAmount += itemTotal;
+          // Format the bill item info with base price before discount and whole numbers for base price
+          const itemInfo = `${menuItem.itemName} - $${basePriceBeforeDiscount.toFixed(2)} x ${quantity} = $${itemTotal.toFixed(2)}`;
+          billItems.push(itemInfo);
+        }
+      });
+      // Round the final total bill amount to 2 decimal places
+      totalBillAmount = parseFloat(totalBillAmount.toFixed(2));
+      return [totalBillAmount, billItems];
+    }
+
+    // Example usage
+    const bill = {
+      billItems: [
+        { id: 1, quantity: 2, discount: { isInPercent: true, rate: 10 } },
+        { id: 2, quantity: 1, discount: { isInPercent: false, rate: 2 } },
+        { id: 3, quantity: 3, discount: { isInPercent: true, rate: 15 } }
+      ]
+    };
+
+    const [totalBillAmount, billItems] = calculateBill(bill);
+    const billContainer = document.getElementById('bill-container');
+    const totalAmountElement = document.getElementById('total-amount');
+
+    billItems.forEach(item => {
+      const itemElement = document.createElement('div');
+      itemElement.classList.add('bill-item');
+      itemElement.textContent = item;
+      billContainer.appendChild(itemElement);
+    });
+
+    totalAmountElement.textContent = totalBillAmount;
+  </script>
+</body>
+</html>
